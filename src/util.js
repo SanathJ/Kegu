@@ -18,7 +18,7 @@ registerFont(__dirname + '/../fonts/Roboto-Bold.ttf', { family: 'Roboto', weight
 const config = JSON.parse(fs.readFileSync('config.json'));
 
 // access key is from screenshotlayer api. Change it to your own in config.json if you want or you can use mine
-const lolApiUrl = 'http://api.screenshotlayer.com/api/capture?delay=3&access_key=' + config.accessKeys[0] + '&fullpage=1&force=1&viewport=3840x2160&url=https://lolalytics.com/lol/kayle/';
+const lolApiUrl = 'http://api.screenshotlayer.com/api/capture?delay=3&access_key=' + config.accessKeys[0] + '&fullpage=1&force=1&viewport=3840x2160&url=https://lolalytics.com/lol/kayle/build';
 
 // separate key
 const opggStatsApiUrl = 'http://api.screenshotlayer.com/api/capture?delay=3&access_key=' + config.accessKeys[2] + '&fullpage=1&force=1&viewport=3840x2160&url=https://op.gg/champion/statistics';
@@ -971,17 +971,17 @@ async function calllol(msg) {
 			return;
 		}
 		image2.contrast(+0.1);
-
+		image2.write('./img/lol.png');
 		let imageCopy = image2.clone();
 		imageCopy.crop(1979, 47, 2477 - 1979, 201 - 47);
 		imageCopy.write('./img/lol1.png');
 
 		imageCopy = image2.clone();
-		imageCopy.crop(1434, 879, 2471 - 1434, 1223 - 879);
+		imageCopy.crop(1434, 879, 2471 - 1434, 1200 - 879);
 		imageCopy.write('./img/lol2.png');
 
 		imageCopy = image2.clone();
-		imageCopy.crop(2170, 1652, 2471 - 2170, 2113 - 1652);
+		imageCopy.crop(2170, 1655, 2471 - 2170, 2090 - 1655);
 		imageCopy.write('./img/lol3.png');
 	});
 
@@ -1049,8 +1049,16 @@ async function callugg(msg) {
 		const pos = positions[preferred[champId.toString()][0] - 1];
 
 		rgx = RegExp('world_' + tierList[i] + '_' + pos + '": *{[\n "a-zA-Z0-9:,_.]*?"counters":');
-		const fullJson = JSON.parse(dom.serialize().match(rgx).toString().replace(/, *"counters" *: */, '}')
-			.replace(RegExp('world_' + tierList[i] + '_' + pos + '": *'), ''));
+
+		let fullJson;
+
+		try {
+			fullJson = JSON.parse(dom.serialize().match(rgx).toString().replace(/, *"counters" *: */, '}')
+				.replace(RegExp('world_' + tierList[i] + '_' + pos + '": *'), ''));
+		}
+		catch {
+			continue;
+		}
 
 		arr[0] = fullJson.win_rate;
 		arr[1] = `${fullJson.rank !== null ? fullJson.rank : '?'} / ${fullJson.total_rank !== null ? fullJson.total_rank : '?'}`;
