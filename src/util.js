@@ -1049,8 +1049,16 @@ async function callugg(msg) {
 		const pos = positions[preferred[champId.toString()][0] - 1];
 
 		rgx = RegExp('world_' + tierList[i] + '_' + pos + '": *{[\n "a-zA-Z0-9:,_.]*?"counters":');
-		const fullJson = JSON.parse(dom.serialize().match(rgx).toString().replace(/, *"counters" *: */, '}')
-			.replace(RegExp('world_' + tierList[i] + '_' + pos + '": *'), ''));
+
+		let fullJson;
+
+		try {
+			fullJson = JSON.parse(dom.serialize().match(rgx).toString().replace(/, *"counters" *: */, '}')
+				.replace(RegExp('world_' + tierList[i] + '_' + pos + '": *'), ''));
+		}
+		catch {
+			continue;
+		}
 
 		arr[0] = fullJson.win_rate;
 		arr[1] = `${fullJson.rank !== null ? fullJson.rank : '?'} / ${fullJson.total_rank !== null ? fullJson.total_rank : '?'}`;
