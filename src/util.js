@@ -971,7 +971,6 @@ async function calllol(msg) {
 			return;
 		}
 		image2.contrast(+0.1);
-		image2.write('./img/lol.png');
 		let imageCopy = image2.clone();
 		imageCopy.crop(1979, 47, 2477 - 1979, 201 - 47);
 		imageCopy.write('./img/lol1.png');
