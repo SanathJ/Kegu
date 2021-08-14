@@ -1,6 +1,6 @@
 {
   "name": "megu-bot",
-  "version": "5.2.1",
+  "version": "6.0.0",
   "description": "Data collection bot for Kayle Mains discord",
   "main": "index.js",
   "scripts": {

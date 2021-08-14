@@ -1,11 +1,13 @@
 module.exports = {
 	name: 'rules',
+	args: true,
 	guildOnly: true,
 	adminOnly: true,
 	description: 'Display rules / specific rule',
 	aliases: ['rule'],
 	usage: '[rule number]',
 	cooldown: 3,
+	minArgLength: 0,
 	async execute(message, args) {
 		const rules = [
 			'#1.) Civility. We would ask for respectful exchanges between server members. We strive for a friendly, non-toxic environment. Treat others as you would like others to treat you.',

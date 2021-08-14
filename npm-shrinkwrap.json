@@ -1,12 +1,12 @@
 {
   "name": "megu-bot",
-  "version": "5.2.1",
+  "version": "6.0.0",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
       "name": "megu-bot",
-      "version": "5.2.1",
+      "version": "6.0.0",
       "license": "ISC",
       "dependencies": {
         "canvas": "^2.8.0",

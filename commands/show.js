@@ -2,6 +2,7 @@ const db = require('../src/database.js');
 
 module.exports = {
 	name: 'show',
+	args: true,
 	guildOnly: true,
 	adminOnly: false,
 	description: 'shows a named link',

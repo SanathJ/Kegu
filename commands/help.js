@@ -1,13 +1,16 @@
-const { prefix } = require('../config.json');
+const { prefix, ownerID } = require('../config.json');
+const { FLAGS } = require('discord.js').Permissions;
 
 module.exports = {
 	name: 'help',
+	args: true,
 	guildOnly: false,
 	adminOnly: false,
 	description: 'List all of my commands or info about a specific command.',
 	aliases: ['commands'],
 	usage: '[command name]',
 	cooldown: 3,
+	minArgLength: 0,
 	async execute(message, args) {
 		const data = [];
 		const { commands } = message.client;
@@ -17,9 +20,9 @@ module.exports = {
 			data.push('```');
 
 			// Hides admin commands if in DM or if user isn't an administrator
-			if(message.channel.type === 'text') {
+			if(message.channel.type === 'GUILD_TEXT') {
 				const mem = await message.guild.members.fetch(message.author);
-				if(!mem.hasPermission(8)) {
+				if(mem.id !== ownerID && !mem.permissions.has(FLAGS.ADMINISTRATOR)) {
 					data.push(commands.filter(command => !command.adminOnly).map(command => command.name.charAt(0).toUpperCase() + command.name.substring(1)).join(', '));
 				}
 				else{
@@ -33,9 +36,9 @@ module.exports = {
 			data.push('```');
 			data.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
 
-			return message.author.send(data, { split: true })
+			return message.author.send({ content: data.join('') })
 				.then(() => {
-					if (message.channel.type === 'dm') return;
+					if (message.channel.type === 'DM') return;
 					message.reply('I\'ve sent you a DM with all my commands!');
 				})
 				.catch(error => {
@@ -59,6 +62,6 @@ module.exports = {
 
 		data.push(`**Cooldown:** ${command.cooldown || 3} second(s)`);
 
-		message.channel.send(data, { split: true });
+		message.channel.send({ content: data.join('\n') });
 	},
 };

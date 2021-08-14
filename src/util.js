@@ -55,6 +55,14 @@ const colors = {
 	},
 };
 
+async function splitAndSendFiles(channel, files) {
+	let arr = files.splice(0, 10);
+	while(arr.length) {
+		await channel.send({ files: arr });
+		arr = files.splice(0, 10);
+	}
+}
+
 async function postOpggGraph(dom, channel, n, data, options = {}) {
 	const opList = [
 		'Top Kayle Win Rate',
@@ -274,7 +282,7 @@ async function postOpggGraph(dom, channel, n, data, options = {}) {
 	 */
 
 	const img = new MessageAttachment(canvas.toBuffer('image/png'), 'op' + n + '.png');
-	return channel.send(opList[n - 1], img);
+	return channel.send({ content: opList[n - 1], files: [img] });
 }
 
 async function callopgg(msg) {
@@ -318,12 +326,12 @@ async function callopgg(msg) {
 		const img = new MessageAttachment(
 			__dirname + '/../img/op5.png',
 		);
-		sendMessage(msg, opggChannelID, img, 'Leaderboard');
+		msg.client.channels.fetch(opggChannelID).then(c => c.send({ content: 'Leaderboard', files: [img] }));
 	});
 }
 
 // pie charts for stats
-async function log1(dom, channel, n) {
+async function log1(dom, n) {
 	const canvas = createCanvas(800, 200);
 
 	const ctx = canvas.getContext('2d');
@@ -374,7 +382,7 @@ async function log1(dom, channel, n) {
 
 
 	const img = new MessageAttachment(canvas.toBuffer('image/png'), 'log' + n + '.png');
-	return channel.send('', img);
+	return img;
 
 }
 
@@ -386,7 +394,7 @@ function drawLine(ctx, x1, y1, x2, y2) {
 	ctx.stroke();
 }
 
-async function log2(dom, channel, n) {
+async function log2(dom, n) {
 
 	// data collection from dom
 	const coll = dom.window.document.getElementsByTagName('progressbar');
@@ -500,10 +508,10 @@ async function log2(dom, channel, n) {
 	}
 
 	const img = new MessageAttachment(canvas.toBuffer('image/png'), 'log' + n + '.png');
-	return channel.send('', img);
+	return img;
 }
 
-async function log3(dom, channel, n) {
+async function log3(dom, n) {
 
 	// only need physical and magic damage, the rest is true
 	const data = [];
@@ -576,7 +584,7 @@ async function log3(dom, channel, n) {
 		legendSize, legendSize);
 
 	const img = new MessageAttachment(canvas.toBuffer('image/png'), 'log' + n + '.png');
-	return channel.send('', img);
+	return img;
 }
 
 function log4helper(ctx, data) {
@@ -600,7 +608,7 @@ function log4helper(ctx, data) {
 	}
 }
 
-async function log4(dom, channel, n) {
+async function log4(dom, n) {
 	const canvas = createCanvas(800, 800);
 	const ctx = canvas.getContext('2d');
 
@@ -719,10 +727,10 @@ async function log4(dom, channel, n) {
 	 */
 
 	const img = new MessageAttachment(canvas.toBuffer('image/png'), 'log' + n + '.png');
-	return channel.send('', img);
+	return img;
 }
 
-async function postLogGraph(channel, n, data, options) {
+async function postLogGraph(n, data, options) {
 	// initialise options
 	if(options.yDomainStart === undefined) {
 		options.yDomainStart = d3.min(data, d => d[1]);
@@ -866,17 +874,18 @@ async function postLogGraph(channel, n, data, options) {
 	 */
 
 	const img = new MessageAttachment(canvas.toBuffer('image/png'), 'log' + n + '.png');
-	return channel.send('', img);
+	return img;
 }
 
 async function calllog(msg) {
 	const dom = await JSDOM.fromURL('https://www.leagueofgraphs.com/champions/stats/kayle', {});
 	const channel = await msg.client.channels.fetch(logChannelID);
 
-	await log1(dom, channel, 1);
-	await log2(dom, channel, 2);
-	await log3(dom, channel, 3);
-	await log4(dom, channel, 4);
+	const files = [];
+	files.push(await log1(dom, 1));
+	files.push(await log2(dom, 2));
+	files.push(await log3(dom, 3));
+	files.push(await log4(dom, 4));
 
 	// data for graphs
 	const rgx = /data: \[\[.+]]/g;
@@ -898,14 +907,14 @@ async function calllog(msg) {
 			y: undefined,
 		},
 	};
-	await postLogGraph(channel, 5, JSON.parse(('{' + matches[1] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(5, JSON.parse(('{' + matches[1] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Popularity History';
 	options.color = colors.log.blue;
 	options.tickStarts.y = 1;
 	// may be changed by postLogGraph if undefined, so we reset
 	options.yDomainStart = undefined;
-	await postLogGraph(channel, 6, JSON.parse(('{' + matches[0] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(6, JSON.parse(('{' + matches[0] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'BanRate History';
 	options.color = colors.log.red;
@@ -913,7 +922,7 @@ async function calllog(msg) {
 	options.tickIntervals.y = 20;
 	// may be changed by postLogGraph if undefined, so we reset
 	options.yDomainStart = undefined;
-	await postLogGraph(channel, 7, JSON.parse(('{' + matches[2] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(7, JSON.parse(('{' + matches[2] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Gold / Game duration';
 	options.color = colors.log.green;
@@ -926,24 +935,24 @@ async function calllog(msg) {
 	options.yDomainStart = 0;
 	options.tickFormat = 'raw';
 	options.scaleFunction = 'linear';
-	await postLogGraph(channel, 8, JSON.parse(('{' + matches[3] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(8, JSON.parse(('{' + matches[3] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Kills + Assists / Game duration';
 	options.tickFormat = 'float';
 	options.tickIntervals.y = 2.5;
-	await postLogGraph(channel, 9, JSON.parse(('{' + matches[5] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(9, JSON.parse(('{' + matches[5] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Deaths / Game duration';
 	options.tickFormat = 'raw';
 	options.color = colors.log.red;
 	options.tickIntervals.y = 1;
-	await postLogGraph(channel, 10, JSON.parse(('{' + matches[6] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(10, JSON.parse(('{' + matches[6] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Winrate / Game Duration';
 	options.tickFormat = 'percent';
 	options.color = colors.log.green;
 	options.tickIntervals.y = 10;
-	await postLogGraph(channel, 11, JSON.parse(('{' + matches[7] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(11, JSON.parse(('{' + matches[7] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Winrate / Ranked Games Played';
 	options.tickIntervals = {
@@ -952,14 +961,16 @@ async function calllog(msg) {
 	};
 	options.tickStarts.y = undefined;
 	options.yDomainStart = undefined;
-	await postLogGraph(channel, 12, JSON.parse(('{' + matches[8] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(12, JSON.parse(('{' + matches[8] + '}').replace('data', '"data"')).data, options));
 
 	options.title = 'Minions / Game duration';
 	options.tickIntervals.y = 50;
 	options.tickStarts.y = 0;
 	options.yDomainStart = 0;
 	options.tickFormat = 'raw';
-	await postLogGraph(channel, 13, JSON.parse(('{' + matches[4] + '}').replace('data', '"data"')).data, options);
+	files.push(await postLogGraph(13, JSON.parse(('{' + matches[4] + '}').replace('data', '"data"')).data, options));
+
+	splitAndSendFiles(channel, files);
 }
 
 async function calllol(msg) {
@@ -989,12 +1000,14 @@ async function calllol(msg) {
 	// can have weird errors if this value isnt high enough
 
 	setTimeout(function() {
+		const files = [];
 		for (let i = 1; i <= 3; i++) {
 			const img = new MessageAttachment(
 				__dirname + '/../img/lol' + i + '.png',
 			);
-			setTimeout(sendMessage, (i * 1000), msg, lolChannelID, img);
+			files.push(img);
 		}
+		msg.client.channels.fetch(lolChannelID).then(c => splitAndSendFiles(c, files));
 	}, 100000);
 
 }
@@ -1098,12 +1111,8 @@ async function callugg(msg) {
 
 		const img = new MessageAttachment(canvas.toBuffer('image/png'), tierName[i] + '.png');
 		const c = await msg.client.channels.fetch(uggChannelID);
-		await c.send(tierName[i], img);
+		await c.send({ content: tierName[i], files: [img] });
 	}
-}
-
-function sendMessage(message, channel, image, text = '') {
-	message.client.channels.fetch(channel).then(c => c.send(text, image));
 }
 
 async function printDateAndPatch(channel = '', message = '') {

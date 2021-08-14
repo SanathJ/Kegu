@@ -18,14 +18,14 @@ module.exports = {
 		const sites = ['opgg', 'ugg', 'log', 'lol'];
 
 		if (!sites.includes(args[0].toLowerCase())) {
-			return message.reply('that\'s not a valid site!');
+			return message.channel.send('That\'s not a valid site!');
 		}
 
 		let row;
 		if(args[1] && args[1] != 'today') {
 			const arr = args[1].split('-');
 			if(args[1].length != 10 || arr.length != 3) {
-				return message.reply('that\'s not a valid date! The correct format is `DD-MM-YYYY`');
+				return message.channel.send('That\'s not a valid date! The correct format is `DD-MM-YYYY`');
 			}
 
 			let dateStr = arr[2] + '-' + arr[1] + '-' + arr[0];
@@ -37,13 +37,13 @@ module.exports = {
 					+ ('0' + chk.getDate()).slice(-2);
 			}
 			catch(err) {
-				return message.reply('that\'s not a valid date! The correct format is `DD-MM-YYYY`');
+				return message.channel.send('That\'s not a valid date! The correct format is `DD-MM-YYYY`');
 			}
 
 			row = await database.row(format('SELECT * FROM %s WHERE Date = ?', args[0]), dateStr);
 
 			if (!row) {
-				message.reply('no data was found for ' + args[1] + '!');
+				message.channel.send('No data was found for ' + args[1] + '!');
 				message.delete().catch(() => {});
 				return;
 			}
@@ -92,10 +92,10 @@ module.exports = {
 			.addField('Banrate', row.Banrate + '%', true);
 
 		message.delete().catch(() => {});
-		message.channel.send(embed)
+		message.channel.send({ embeds: [embed] })
 			.then(msg => {
 				if (msg.guild && msg.channel.id != config.channels.bot) {
-					msg.delete({ timeout: 120000 });
+					setTimeout(() => msg.delete(), 120000);
 				}
 			});
 	},

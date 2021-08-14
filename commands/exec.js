@@ -16,6 +16,6 @@ module.exports = {
 			str += ' ';
 		}
 		str = str.trim();
-		message.channel.send(JSON.stringify(await database.runner(args[0], str)));
+		message.channel.send({ content: JSON.stringify(await database.runner(args[0], str)) });
 	},
 };

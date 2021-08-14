@@ -10,10 +10,6 @@ const sites = require('../src/sites.js');
 
 const { patchUrl } = require('../src/util.js');
 
-function filter(reaction, user) {
-	return reaction.emoji.id == config.emojiID && !user.bot;
-}
-
 let lastClient;
 
 async function curr(client) {
@@ -21,6 +17,10 @@ async function curr(client) {
 
 	lastClient.channels.fetch(config.channels.current).then(channel => channel.bulkDelete(40));
 	const siteArr = ['opgg', 'ugg', 'lol', 'log'];
+	const embeds = [];
+	const currentChannel = await lastClient.channels.fetch(config.channels.current);
+
+	currentChannel.sendTyping();
 	for (let i = 0; i < siteArr.length; i++) {
 		const row = {};
 		// sets image, url, color, and data based on site
@@ -82,12 +82,16 @@ async function curr(client) {
 			.addField('Pickrate', row.Pickrate + '%', true)
 			.addField('Banrate', row.Banrate + '%', true);
 
-		await lastClient.channels.fetch(config.channels.current).then(channel => channel.send(embed));
+		embeds.push(embed);
 	}
 
-	const sentMsg = await lastClient.channels.fetch(config.channels.current).then(channel => channel.send('```Refresh```'));
+	await currentChannel.send({ embeds: embeds });
+
+	const sentMsg = await currentChannel.send('```Refresh```');
 	sentMsg.react(config.emojiID);
-	const collector = sentMsg.createReactionCollector(filter, { max: 1 });
+
+	const filter = (reaction, user) => reaction.emoji.id == config.emojiID && !user.bot;
+	const collector = sentMsg.createReactionCollector({ filter, max: 1 });
 
 	collector.on('collect', handler);
 }

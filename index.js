@@ -1,5 +1,17 @@
 const Discord = require('discord.js');
-const bot = new Discord.Client();
+const flags = Discord.Intents.FLAGS;
+const bot = new Discord.Client({
+	intents: [
+		flags.GUILDS,
+		flags.GUILD_MESSAGES,
+		flags.GUILD_MESSAGE_REACTIONS,
+		flags.DIRECT_MESSAGES,
+		flags.GUILD_EMOJIS_AND_STICKERS,
+	],
+	partials: [
+		'CHANNEL',
+	],
+});
 
 const fs = require('fs');
 
@@ -38,8 +50,7 @@ bot.on('error', console.error);
 
 const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-bot.on('message', async msg => {
-
+bot.on('messageCreate', async msg => {
 	const prefixRegex = new RegExp(`^(<@!?${bot.user.id}>|${escapeRegex(PREFIX)})\\s*`);
 
 	if (!prefixRegex.test(msg.content)) return;
@@ -53,13 +64,13 @@ bot.on('message', async msg => {
 
 	if (!command) return;
 
-	if (command.guildOnly && msg.channel.type !== 'text') {
+	if (command.guildOnly && msg.channel.type === 'DM') {
 		return msg.reply('I can\'t execute that command inside DMs!');
 	}
 
 	if (command.adminOnly) {
 		const mem = await msg.guild.members.fetch(msg.author);
-		if(mem.id !== config.ownerID && !mem.hasPermission(8)) return;
+		if(mem.id !== config.ownerID && !mem.permissions.has(Discord.Permissions.FLAGS.ADMINISTRATOR)) return;
 	}
 
 
@@ -87,7 +98,7 @@ bot.on('message', async msg => {
 
 		if (now < expirationTime) {
 			const timeLeft = (expirationTime - now) / 1000;
-			return msg.reply(`please wait ${timeLeft.toFixed()} more second(s) before reusing the \`${command.name}\` command.`);
+			return msg.reply(`Please wait ${timeLeft.toFixed()} more second(s) before reusing the \`${command.name}\` command.`);
 		}
 	}
 	else {
@@ -100,7 +111,7 @@ bot.on('message', async msg => {
 	}
 	catch (error) {
 		console.error(error);
-		msg.reply('there was an error trying to execute that command!');
+		msg.reply('There was an error trying to execute that command!');
 	}
 });
 
